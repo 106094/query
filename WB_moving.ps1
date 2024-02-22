@@ -192,7 +192,7 @@ if($donelist -like "*$webupexceln*" -and (test-path $webupexcelfolderdone)){
 if($donelist -like "*$webupexceln*" -and !(test-path $webupexcelfolderdone)){
     move-item ($webupexcelfolder+"\")  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Force 
 }
-
+}
 
 
 foreach($webupexcel2 in $webupexcels_con){

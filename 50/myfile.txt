@@ -1,0 +1,4 @@
+connect webvpnauto.lenovo.com
+syo
+Drivervd11
+901221

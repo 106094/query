@@ -1,0 +1,4 @@
+connect myvpnhost
+myloginname
+mypassword
+"%ProgramFiles%\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe" -s < myfile.dat

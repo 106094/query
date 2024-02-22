@@ -185,11 +185,12 @@ foreach($webupexcel in $webupexcels_com){
      $webupexcelf=$webupexcel.fullname
       $webupexceln=$webupexcel.name
       $webupexcelfolder=($webupexcel.Directory).FullName
-
-if($donelist -like "*$webupexceln*" -and (test-path $webupexcelfolder)){
-    move-item ($webupexcelfolder+"\")  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Force -ErrorAction SilentlyContinue 
+      $webupexcelfolderdone="\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone\$(($webupexcel.Directory).Name)"
+if($donelist -like "*$webupexceln*" -and (test-path $webupexcelfolderdone)){
+  remove-item  $webupexcelfolder -Recurse -Force
 }
-
+if($donelist -like "*$webupexceln*" -and !(test-path $webupexcelfolderdone)){
+    move-item ($webupexcelfolder+"\")  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Force 
 }
 
 
@@ -198,11 +199,16 @@ foreach($webupexcel2 in $webupexcels_con){
 
    $webupexcelf2=$webupexcel2.fullname
       $webupexceln2=$webupexcel2.name
+      $webupexcelfolder2=($webupexcel2.Directory).FullName
+      $webupexcelfolderdone2="\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone\$(($webupexcel2.Directory).Name)"
 
-if($donelist -like "*$webupexceln2*" -and (test-path $webupexcelf2)){
-move-item (Split-Path $webupexcelf2)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone"  -Force
-
+if($donelist -like "*$webupexceln2*" -and (test-path $webupexcelfolderdone2)){
+  remove-item  $webupexcelfolder2 -Recurse -Force
 }
+if($donelist -like "*$webupexceln2*" -and !(test-path $webupexcelfolderdone2)){
+    move-item ($webupexcelfolder2+"\")  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Force 
+}
+
 }
 
 ##>

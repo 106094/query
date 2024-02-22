@@ -1,0 +1,21 @@
+Send-MailMessage -From 'RC_Release <shuningyu17120@allion.com.tw>' -To 'shuningyu17120@allion.com.tw' -Subject 'Test mail'  -body 'test123'  -DeliveryNotificationOption OnSuccess, OnFailure -SmtpServer zimbra.allion.com.tw
+
+RC_Release <shuningyu17120@allion.com.tw>
+
+
+#send as mail body
+$paramHash = @{
+ To = "Jhicks@jdhitsolutions.com"
+ from = "jhicks@jdhitsolutions.com"
+ BodyAsHtml = $True
+ Body = $html
+ Subject = "Daily Process Report for $Computername"
+}
+ 
+Send-MailMessage @paramHash
+
+
+-Cc
+-Encoding
+
+ -DeliveryNotificationOption OnSuccess, OnFailure -SmtpServer 'smtp.fabrikam.com'

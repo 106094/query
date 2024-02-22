@@ -1,0 +1,1 @@
+schtasks /create /sc minute /mo 60 /tn "query_database3" /tr "\\192.168.20.20\sto\EO\2_AutoTool\ALL\65.Query_database\database_generator\query.bat" /st 09:30 /et 22:30 

@@ -1,0 +1,3 @@
+CIModule_upload.bat->Machine:FTP, Period:daily 1:08
+ftp_all.bat->Machine:FTP, Period: 5 mins
+wddi.bat->Machine:Siri, Period: 10 mins

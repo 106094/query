@@ -1,6 +1,9 @@
-﻿$webupexcels_com=gci -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|?{ $_.Directory -notmatch "型番データ" -and $_.Directory -notmatch "_movedone" }|Sort-Object CreationTime 
-$webupexcels_con=gci -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|?{ $_.Directory -match "型番データ" -and $_.Directory -notmatch "_movedone"}|Sort-Object CreationTime 
-$settings=import-csv -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\Webup_Folder_setting.csv  -Encoding  UTF8
+﻿$webupexcels_com=get-childitem -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|`
+where-object{ $_.Directory -notmatch "型番データ" -and $_.Directory -notmatch "_movedone" -and $_.Directory -notmatch "exception"  -and $_.Directory -notmatch "NoNeed"  }|Sort-Object CreationTime 
+$webupexcels_con=get-childitem -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|`
+where-object{ $_.Directory -match "型番データ" -and $_.Directory -notmatch "_movedone" -and $_.Directory -notmatch "exception"  -and $_.Directory -notmatch "NoNeed" }|Sort-Object CreationTime 
+$settings=import-csv -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\Webup_Folder_setting.csv -Encoding  UTF8
+$settings2=import-csv -path \\192.168.56.49\Public\_AutoTask\RC\Goemon_summary.csv  -Encoding  UTF8
 $donelist=get-content -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\done_lists.txt
   
     $Excel = New-Object -ComObject Excel.Application
@@ -13,7 +16,12 @@ foreach($webupexcel in $webupexcels_com){
   
      $webupexcelf=$webupexcel.fullname
       $webupexceln=$webupexcel.name
+      $webupfoldername=($webupexcel.directory).name
+      $webupfolderfull=($webupexcel.directory).FullName
 
+      $Qfoldernew0=($settings2|where-object{$_."RC_folder" -eq  $webupfoldername})."goemon_path"
+      $Qfoldernew= ($Qfoldernew0.split("/"))[3]
+      
 if(-not($donelist -like "*$webupexceln*")){
  $webupexcelf
  <### 
@@ -56,16 +64,23 @@ if(-not($donelist -like "*$webupexceln*")){
      #$modelall
     }until($i -eq $sheetcount)
        
-$modelall_fi=$modelall|?{$_.length -gt 0}|Sort-Object |Get-Unique
+$modelall_fi=$modelall|where-object{$_.length -gt 0}|Sort-Object |Get-Unique
 $Qfolderall=$null
 foreach($modelall_fi1 in $modelall_fi){
 
  $modelall_fi2= (($modelall_fi1.split(" ")[0]).split("("))[0]
  
- $Qfolder=($settings|?{$_."model" -eq $modelall_fi2})."Q"
-$Qfolderall=$Qfolderall+@("$Qfolder")
+ $Qfolder=($settings|where-object{$_."model" -eq $modelall_fi2})."Q"
+ $Qfolderall=$Qfolderall+@("$Qfolder")
 
+ #check if no in settings
+ $checkadd=$settings|where-object{$_."model" -eq $modelall_fi2 -and $_."Q" -eq $Qfoldernew}
+ if(!$checkadd){
+  "$modelall_fi2, $Qfoldernew"|add-content -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\Webup_Folder_setting.csv
+ }
 }
+
+$Qfolderall=$Qfolderall+@("$Qfoldernew")
 
 $Qfolderall2=$Qfolderall |Sort-Object|Get-Unique|where-Object{$_.length -gt 0}
 
@@ -80,7 +95,7 @@ New-Item -Path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相
 }
 
 $webupexcel_checkname= (( $webupexceln -split "_rev") -split "_draft")[0]
-$findold=(gci -path  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Commercial\$Qfolderall22" -file |?{$_.BaseName -match "^$webupexcel_checkname"}).fullname
+$findold=(get-childitem -path  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Commercial\$Qfolderall22" -file |where-object{$_.BaseName -match "^$webupexcel_checkname"}).fullname
 
 if($findold.count -ne 0){
 
@@ -90,8 +105,9 @@ move-item $_ -Destination "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\
 
 }
 
+
 copy-item  $webupexcelf -Destination "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Commercial\$Qfolderall22" -Force
-move-item (Split-Path $webupexcelf)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone"  -Force
+copy-item  $webupfolderfull -Destination  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Recurse -Force
 
 $datenow=get-date -Format yy-M-d_Hmm
 
@@ -115,7 +131,7 @@ foreach($webupexcel2 in $webupexcels_con){
       $webupexceln2=$webupexcel2.name
 
 if(-not($donelist -like "*$webupexceln2*")){
- $qfolder= ($webupexcel2.directory)  -split "-" |?{$_ -match "型番データ" }
+ $qfolder= ($webupexcel2.directory)  -split "-" |where-object{$_ -match "型番データ" }
             
 $webupexcel_checkname= (( $webupexceln2 -split "_rev") -split "_draft")[0]
 $webupexcel_checkname=($webupexcel_checkname.replace("(","\(")).replace(")","\)")
@@ -126,7 +142,7 @@ New-Item -Path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相
 New-Item -Path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Consumer\$qfolder\" -Name "_old" -ItemType "directory" |Out-Null
 }
 
-$findold=(gci -path  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Consumer\$qfolder" -file  |?{$_.BaseName -match "^$webupexcel_checkname"}).fullname
+$findold=(get-childitem -path  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Consumer\$qfolder" -file  |where-object{$_.BaseName -match "^$webupexcel_checkname"}).fullname
 
 if($findold.count -ne 0){
 
@@ -138,7 +154,7 @@ move-item $_ -Destination "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\
 }
 
 copy-item  $webupexcelf2 -Destination "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\Consumer\$qfolder" -Force
-#move-item (Split-Path $webupexcelf2)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone"  -Force
+copy-item (Split-Path $webupexcelf2)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Recurse -Force
 
 $datenow=get-date -Format yy-M-d_Hmm
 $webupexcelf22=$webupexcelf2.replace("\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\","")
@@ -155,21 +171,23 @@ $excel=$null
 ### move copy done folder ###
 
 
-$settings=import-csv -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\Webup_Folder_setting.csv  -Encoding  UTF8
+$settings=import-csv -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\Webup_Folder_setting.csv -Encoding  UTF8
 $donelist=get-content -path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\done_lists.txt
 
-$webupexcels_com=gci -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|?{ $_.Directory -notmatch "型番データ" -and $_.Directory -notmatch "_movedone" }|Sort-Object CreationTime 
-$webupexcels_con=gci -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|?{ $_.Directory -match "型番データ" -and $_.Directory -notmatch "_movedone"}|Sort-Object CreationTime 
+$webupexcels_com=get-childitem -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|`
+where-object{ $_.Directory -notmatch "型番データ" -and $_.Directory -notmatch "_movedone" -and $_.Directory -notmatch "exception"  -and $_.Directory -notmatch "NoNeed"  }|Sort-Object CreationTime 
+$webupexcels_con=get-childitem -path "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\" -Recurse -file -filter *.xls*|`
+where-object{ $_.Directory -match "型番データ" -and $_.Directory -notmatch "_movedone" -and $_.Directory -notmatch "exception"  -and $_.Directory -notmatch "NoNeed" }|Sort-Object CreationTime 
 
     
 foreach($webupexcel in $webupexcels_com){
   
      $webupexcelf=$webupexcel.fullname
       $webupexceln=$webupexcel.name
+      $webupexcelfolder=($webupexcel.Directory).FullName
 
-if($donelist -like "*$webupexceln*" -and (test-path $webupexcelf)){
-move-item (Split-Path $webupexcelf)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone"  -Force
-
+if($donelist -like "*$webupexceln*" -and (test-path $webupexcelfolder)){
+    move-item ($webupexcelfolder+"\")  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\_movedone" -Force -ErrorAction SilentlyContinue 
 }
 
 }
@@ -196,7 +214,7 @@ move-item (Split-Path $webupexcelf2)  "\\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\
 $weekday=(get-date).DayOfWeek
 $hournow=(get-date).Hour
 if($weekday -match "Mon" -or $weekday -match "Tue" -and $hournow -eq 10) {
-$leftlist=(gci -Path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\ -Directory).Name -match "\d{2}.\d{2}"
+$leftlist=(get-childitem -Path \\192.168.20.20\sto\EO\VD1\Dept-2\nec_tc\01.Driver_G\13.Webup相關\_型番參考資料\new-in\ -Directory).Name -match "\d{2}.\d{2}"
 $list=[string]::Join("<BR>",$leftlist)
 $left_count=$leftlist.count
 if($left_count -gt 0){
